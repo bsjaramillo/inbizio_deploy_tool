@@ -29,8 +29,8 @@ class InbizioDeployTool:
             if resp.stderr:
                 raise Exception('Error executing the command: '+resp.stderr)
         else:
-            resp = self.ssh_client.exec_command(command)
-            error = resp.stderr.read().decode('utf-8')
+            _, _, stderr = self.ssh_client.exec_command(command)
+            error = stderr.read().decode('utf-8')
             if error:
                 raise Exception('Error executing the command: '+error)
         print('Command executed')
@@ -75,7 +75,6 @@ class InbizioDeployTool:
                 f'The deploy file in path {deploy_path} does not exist')
         try:
             sftp = self.ssh_client.open_sftp()
-            print('Uploading the deploy...')
             sftp.put(deploy_path,
                      f'{INBIZIO_REMOTE_PATH}/inbizio{version}.zip')
             print('Deploy uploaded')
