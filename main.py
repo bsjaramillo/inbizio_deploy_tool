@@ -99,6 +99,11 @@ class InbizioDeployTool:
         self.upload_deploy(version)
         self.unzip_deploy(version)
 
+    def rollback_deploy(self, version):
+        self.connect()
+        self.remove_old_deploy()
+        self.unzip_deploy(version)
+
     def close(self):
         self.ssh_client.close()
 
@@ -107,7 +112,12 @@ if __name__ == '__main__':
     args_parser = argparse.ArgumentParser(description='Inbizio Deploy Tool')
     args_parser.add_argument(
         '--version', type=str, help='Version to deploy', required=True, action='store')
+    args_parser.add_argument(
+        '--mode', type=str, help='Deploy or Rollback', required=True, action='store')
     args = args_parser.parse_args()
     deploy_tool = InbizioDeployTool()
-    deploy_tool.deploy(args.version)
+    if args.mode == 'deploy':
+        deploy_tool.deploy(args.version)
+    elif args.mode == 'rollback':
+        deploy_tool.rollback_deploy(args.version)
     deploy_tool.close()
