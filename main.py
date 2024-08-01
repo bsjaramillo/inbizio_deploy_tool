@@ -54,17 +54,17 @@ class InbizioDeployTool:
 
     def remove_old_deploy(self):
         print('Removing old deploy...')
-        try:
-            self.execute_command(
-                f'rm -r {INBIZIO_REMOTE_PATH}/*')
-        except Exception as e:
-            raise Exception(f'Error removing old deploy: {e}')
+        # try:
+        #     self.execute_command(
+        #         f'rm -r {INBIZIO_REMOTE_PATH}/*')
+        # except Exception as e:
+        #     raise Exception(f'Error removing old deploy: {e}')
         try:
             self.execute_command(
                 f'rm -r {INBIZIO_REMOTE_DEPLOY_PATH}/*')
+            print('Removed old deploy')
         except Exception as e:
             raise Exception(f'Error removing old deploy: {e}')
-        print('Removed old deploy')
 
     def upload_deploy(self, version):
         print('Uploading the deploy...')
