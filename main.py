@@ -16,33 +16,27 @@ INBIZIO_REMOTE_PATH = os.getenv('INBIZIO_REMOTE_PATH')
 INBIZIO_REMOTE_DEPLOY_PATH = os.getenv('INBIZIO_REMOTE_DEPLOY_PATH')
 
 
-def execute_command(ssh, command, local=False):
-    if local:
-        result = subprocess.run(command, shell=True, check=True,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        output, error = result.stdout, result.stderr
-        print(f'Executing: {command}')
-        print(output)
-        if error:
-            print(error)
-        return output, error
-    else:
-        stdin, stdout, stderr = ssh.exec_command(command)
-        output = stdout.read().decode('utf-8')
-        error = stderr.read().decode('utf-8')
-        print(f'Executing: {command}')
-        print(output)
-        if error:
-            print(error)
-        return output, error
-
-
 class InbizioDeployTool:
     def __init__(self):
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+    def execute_command(self, command, local=False):
+        print(f'Executing: {command}')
+        if local:
+            resp = subprocess.run(command, shell=True, check=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if resp.stderr:
+                raise Exception('Error executing the command: '+resp.stderr)
+        else:
+            resp = self.ssh_client.exec_command(command)
+            error = resp.stderr.read().decode('utf-8')
+            if error:
+                raise Exception('Error executing the command: '+error)
+        print('Command executed')
+
     def connect(self):
+        print('Connecting to the server...')
         try:
             self.ssh_client.connect(SERVER_HOST, SERVER_PORT,
                                     SERVER_USER, SERVER_PASSWORD)
@@ -55,25 +49,25 @@ class InbizioDeployTool:
             print(f'Error: {e}')
 
     def zip_deploy(self, version):
-        output, error = execute_command(
-            self.ssh_client, f'cd {INBIZIO_PROJECT_PATH}/dist && zip -r inbizio{version}.zip .', local=True)
-        if error:
-            raise Exception('Error compressing the build folder: '+error)
+        self.execute_command(
+            f'cd {INBIZIO_PROJECT_PATH}/dist && zip -r inbizio{version}.zip .', local=True)
 
     def remove_old_deploy(self):
+        print('Removing old deploy...')
         try:
-            self.ssh_client.exec_command(
+            self.execute_command(
                 f'rm -r {INBIZIO_REMOTE_PATH}/*')
         except Exception as e:
             raise Exception(f'Error removing old deploy: {e}')
         try:
-            self.ssh_client.exec_command(
+            self.execute_command(
                 f'rm -r {INBIZIO_REMOTE_DEPLOY_PATH}/*')
         except Exception as e:
             raise Exception(f'Error removing old deploy: {e}')
         print('Removed old deploy')
 
     def upload_deploy(self, version):
+        print('Uploading the deploy...')
         deploy_path = os.path.join(
             INBIZIO_PROJECT_PATH, 'dist', f'inbizio{version}.zip')
         if not os.path.exists(deploy_path):
@@ -91,9 +85,11 @@ class InbizioDeployTool:
             sftp.close()
 
     def unzip_deploy(self, version):
+        print('Unzipping the deploy...')
         try:
-            execute_command(
-                self.ssh_client, f'unzip {INBIZIO_REMOTE_PATH}/inbizio{version}.zip -d {INBIZIO_REMOTE_DEPLOY_PATH}')
+            self.execute_command(
+                f'unzip {INBIZIO_REMOTE_PATH}/inbizio{version}.zip -d {INBIZIO_REMOTE_DEPLOY_PATH}')
+            print('Deploy unzipped')
         except Exception as e:
             raise Exception(f'Error unzipping the build folder: {e}')
 
