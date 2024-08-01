@@ -93,7 +93,7 @@ class InbizioDeployTool:
     def unzip_deploy(self, version):
         try:
             execute_command(
-                self.ssh_client, f'unzip {INBIZIO_REMOTE_PATH}/inbizio{version}.zip -d {INBIZIO_REMOTE_DEPLOY_PATH}/html')
+                self.ssh_client, f'unzip {INBIZIO_REMOTE_PATH}/inbizio{version}.zip -d {INBIZIO_REMOTE_DEPLOY_PATH}')
         except Exception as e:
             raise Exception(f'Error unzipping the build folder: {e}')
 
