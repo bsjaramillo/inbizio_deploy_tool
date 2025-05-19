@@ -48,23 +48,28 @@ class InbizioDeployTool:
         except paramiko.ssh_exception.SSHException as e:
             print(f'Error: {e}')
 
-    def zip_deploy(self, version):
-        self.execute_command(
-            f'cd {INBIZIO_PROJECT_PATH}/dist && zip -r inbizio{version}.zip .', local=True)
-
     def remove_old_deploy(self):
         print('Removing old deploy...')
         # try:
-        #     self.execute_command(
-        #         f'rm -r {INBIZIO_REMOTE_PATH}/*')
         # except Exception as e:
         #     raise Exception(f'Error removing old deploy: {e}')
         try:
             self.execute_command(
-                f'rm -r {INBIZIO_REMOTE_DEPLOY_PATH}/*')
+                f'rm -rf {INBIZIO_REMOTE_PATH}/*')
+            self.execute_command(
+                f'rm -rf {INBIZIO_REMOTE_DEPLOY_PATH}/*')
             print('Removed old deploy')
         except Exception as e:
             raise Exception(f'Error removing old deploy: {e}')
+
+    def zip_deploy(self, version):
+        print('Zipping the deploy...')
+        try:
+            self.execute_command(
+                f'cd {INBIZIO_PROJECT_PATH}/dist && zip -r inbizio{version}.zip .', local=True)
+            print('Deploy zipped')
+        except Exception as e:
+            raise Exception(f'Error zipping the build folder: {e}')
 
     def upload_deploy(self, version):
         print('Uploading the deploy...')
@@ -75,8 +80,10 @@ class InbizioDeployTool:
                 f'The deploy file in path {deploy_path} does not exist')
         try:
             sftp = self.ssh_client.open_sftp()
-            sftp.put(deploy_path,
-                     f'{INBIZIO_REMOTE_PATH}/inbizio{version}.zip')
+            print(
+                f'deply_path: {deploy_path} {INBIZIO_REMOTE_PATH}/inbizio{version}.zip')
+            sftp.put(
+                deploy_path, f'{INBIZIO_REMOTE_PATH}/inbizio{version}.zip')
             print('Deploy uploaded')
         except Exception as e:
             raise Exception(f'Error uploading the build folder: {e}')
@@ -94,7 +101,7 @@ class InbizioDeployTool:
 
     def deploy(self, version):
         self.connect()
-        self.zip_deploy(version)
+        # self.zip_deploy(version)
         self.remove_old_deploy()
         self.upload_deploy(version)
         self.unzip_deploy(version)
